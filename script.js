@@ -23,19 +23,21 @@ const renderCountry = function (data, className = "") {
   countriesContainer.insertAdjacentHTML("beforeend", html);
   countriesContainer.style.opacity = 1;
 };
+const getJSON = function (apiLink, errorMessage = "Something went wrong") {
+  return fetch(apiLink).then((response) => {
+    if (!response.ok) throw new Error(`${errorMessage} ${response.status}`);
+    return response.json();
+  });
+};
 const getCountryData = function (country) {
-  fetch(`https://restcountries.com/v3.1/name/${country}`)
-    .then((response) => response.json())
+  getJSON(`https://restcountries.com/v3.1/name/${country}`, "Country not found")
     .then((data) => {
       renderCountry(data[0]);
       const neighbour = data[0].borders?.[0];
-
-      return fetch(`https://restcountries.com/v3.1/alpha/${neighbour}`);
-    })
-    .then((response) => {
-      if (!response.ok)
-        throw new Error(`Neighbour not found (${response.status})`);
-      return response.json();
+      return getJSON(
+        `https://restcountries.com/v3.1/alpha/${neighbour}`,
+        "neighbour not found"
+      );
     })
     .then((data) => renderCountry(data[0], "neighbour"))
     .catch((err) => {
@@ -43,12 +45,13 @@ const getCountryData = function (country) {
       // Optionally display error to user
       countriesContainer.insertAdjacentHTML(
         "beforeend",
-        `<p class="error">💥 ${err.message}</p>`
+        `<p class="error">💥 ${`You have an error: ${err.message}`}</p>`
       );
     })
     .finally(() => {
       countriesContainer.style.opacity = 1;
     });
 };
-
-getCountryData("india");
+btn.addEventListener("click", () => {
+  getCountryData("australia");
+});
